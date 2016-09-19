@@ -1413,10 +1413,6 @@ static void binder_transaction(struct binder_proc *proc,
 	e->data_size = tr->data_size;
 	e->offsets_size = tr->offsets_size;
 
-	mutex_lock(&ipc_rec_lock);
-	binder_trans_notify(e->from_proc, e->to_proc, e->data_size);
-	mutex_unlock(&ipc_rec_lock);
-
 	if (reply) {
 		in_reply_to = thread->transaction_stack;
 		if (in_reply_to == NULL) {
@@ -1790,6 +1786,10 @@ static void binder_transaction(struct binder_proc *proc,
 			wake_up_interruptible(target_wait);
 		}
 	}
+
+	mutex_lock(&ipc_rec_lock);
+	binder_trans_notify(e->from_proc, e->to_proc, e->data_size);
+	mutex_unlock(&ipc_rec_lock);
 	return;
 
 err_get_unused_fd_failed:
