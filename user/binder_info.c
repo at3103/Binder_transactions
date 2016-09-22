@@ -1,13 +1,15 @@
-#include "../kernel/include/uapi/linux/types.h"
-//#include <uapi/linux/types.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
 #include "../kernel/include/hw2/binder_utils.h"
-//#include <linux/types.h>
-#include "../kernel/include/linux/types.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 int main(int argc, char **argv)
 {
 	//Stub implementation
+<<<<<<< HEAD
 	pid_t pid;
 	char *command;
 	size_t *size;
@@ -46,5 +48,7 @@ int main(int argc, char **argv)
 		printf("Error: Invalid argument\n");
  
 
+	printf("%d\n", (int)syscall(244, 1, 2));
+	printf("%d\n", (int)syscall(245, 1, NULL, NULL, NULL));
 	return 0;
 }
