@@ -8,10 +8,13 @@
 
 struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 {
-	struct binder_proc_data *result = (struct binder_proc_data *)
-		kmalloc(sizeof(struct binder_proc_data), __GFP_WAIT);
+	struct binder_proc_data *result;
 	struct task_struct *task = find_task_by_vpid(pid);
 
+	if (task == (struct task_struct *)NULL)
+		return (struct binder_proc_data *)NULL;
+	result = (struct binder_proc_data *)
+		kmalloc(sizeof(struct binder_proc_data), __GFP_WAIT);
 	result->peers_head = (struct binder_peers_wrapper *)NULL;
 	result->peers_tail = (struct binder_peers_wrapper *)NULL;
 	strcpy(result->stats.comm, task->comm);
@@ -32,6 +35,8 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 	if (binder_trans_tail == (struct binder_proc_data *)NULL) {
 		if (state == 1) {
 			binder_trans_head = _init_binder_trans_node(pid, state); 
+			if (binder_trans_head == (struct binder_proc_data *)NULL)
+				return -1;
 			binder_trans_tail = binder_trans_head;
 		} else
 			return 0;
@@ -46,6 +51,8 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 	if (found == (struct list_head *)NULL) {
 		if (state == 1) {
 			data_node = _init_binder_trans_node(pid, state); 
+			if (data_node == (struct binder_proc_data *)NULL)
+				return -1;
 			list_add(&(data_node->list), &(binder_trans_tail->list));
 			binder_trans_tail = data_node;
 		} else
@@ -80,6 +87,8 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	memcpy(stats, &(data_node->stats), sizeof(struct binder_stats));
 	if (*size < sizeof(struct binder_peer))
 		return -1;
+	if (data_node->peers_tail == (struct binder_peers_wrapper *)NULL)
+		return 0;
 	list_for_each_entry(peers_node, &(data_node->peers_head->list), list) {
 		memcpy(curbuf, &(peers_node->peer), sizeof(struct binder_peer));
 		result++;
