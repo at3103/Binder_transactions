@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
+#define YIYAYIYAYO
 #include "../kernel/include/hw2/binder_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +11,7 @@
 int main(int argc, char **argv)
 {
 	pid_t pid;
-	size_t size;
+	size_t size = 1024;
 	void *buf = NULL;
 	struct binder_stats *stats = (struct binder_stats *)NULL;
 	struct binder_peer *peer = (struct binder_peer *)NULL;
@@ -31,14 +32,14 @@ int main(int argc, char **argv)
 		if (syscall(244, pid, 1) != 0)
 			goto err_handle;
 	} else if (strcmp(argv[1], "print") == 0) {
+		buf = (void *)malloc(size);
+		stats = (struct binder_stats *)malloc(sizeof(struct binder_stats));
 		count = syscall(245, pid, stats, buf, &size);
 		if (count < 0L)
 			goto err_handle;
 		peer = (struct binder_peer *)buf;
-		/*
 		printf("%s (%u):\t%u bytes\t%u transactions\n",
 		       stats->comm, pid, stats->bytes, stats->nr_trans);
-		*/
 		for (i = 0L; i < count; i++)
 			printf("\t\t%s\t%u\t%u\n", peer[i].comm,
 			       peer[i].pid, peer[i].uid);

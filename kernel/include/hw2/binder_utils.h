@@ -1,5 +1,7 @@
 #include <linux/types.h>
+#ifndef YIYAYIYAYO
 #include <linux/list.h>
+#endif
 
 #ifndef BINDERS_R_THERE
 #define BINDERS_R_THERE
@@ -16,19 +18,22 @@ struct binder_stats {
 	unsigned int bytes;	/* Total number of bytes transferred */
 };
 
+#ifndef YIYAYIYAYO
 struct binder_peers_wrapper {
 	struct binder_peer peer;
 	struct list_head list;
 };
 
 struct binder_proc_data {
-	struct binder_peers_wrapper peers;
+	struct binder_peers_wrapper *peers_head, *peers_tail;
 	struct binder_stats stats;
 	int state;
-	int pid;
+	pid_t pid;
 	struct list_head list;
 };
 
-extern struct binder_proc_data binder_list;
+extern struct binder_proc_data *binder_trans_head;
+extern struct binder_proc_data *binder_trans_tail;
+#endif
 
 #endif
