@@ -34,8 +34,8 @@ int main(int argc, char **argv)
 		}
 		printf("%s (%u):\t%u bytes\t%u transactions\n",
                 stats.comm, pid, stats.bytes, stats.nr_trans);
-		for (peer = buf; *peer != NULL; peer = peer + sizeof(struct binder_perr)) {
-			printf("\t\t%s\t%u\t%u\n", ->comm, peer->pid, peer->uid);
+		for (peer = buf; *peer != NULL; peer = peer + sizeof(struct binder_peer)) {
+			printf("\t\t%s\t%u\t%u\n", peer->comm, peer->pid, peer->uid);
 }
 	}
 	else if (strcmp(command, "stop"))
@@ -46,8 +46,5 @@ int main(int argc, char **argv)
 	else
 		printf("Error: Invalid argument\n");
  
-
-	printf("%d\n", (int)syscall(244, 1, 2));
-	printf("%d\n", (int)syscall(245, 1, NULL, NULL, NULL));
 	return 0;
 }
