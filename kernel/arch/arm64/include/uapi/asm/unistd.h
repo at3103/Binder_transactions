@@ -14,3 +14,5 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <asm-generic/unistd.h>
+__SYSCALL(__NR_arch_specific_syscall, sys_binder_rec)
+__SYSCALL(__NR_arch_specific_syscall + 1, sys_binder_stats)
