@@ -10,11 +10,11 @@ int main(int argc, char **argv)
 {
 	//Stub implementation
 	pid_t pid;
-	char *command;
-	size_t *size;
-	binder_stats stats;
+	char *command = NULL;
+	size_t *size = NULL;
+	struct binder_stats stats;
 	void *buf;
-	void *peer;
+	struct binder_peer *peer;
 	
 	buf = malloc(4096);
 
@@ -22,11 +22,12 @@ int main(int argc, char **argv)
 	pid = (pid_t) atoi(argv[0]);
 	strcpy(command, argv[1]);
 	
-	if (strcmp(command, "start")) 
+	if (strcmp(command, "start")) { 
 		if (syscall(244, pid, 1) == -1) {
                 	fprintf(stderr, "Error processing pid %u: %s\n",
                 pid, strerror(errno));
                 }
+	}
 	else if (strcmp(command, "print")) {
 		if(syscall(245, pid, stats, buf, size) == -1) {
 			fprintf(stderr, "Error processing pid %u: %s\n",
@@ -34,17 +35,19 @@ int main(int argc, char **argv)
 		}
 		printf("%s (%u):\t%u bytes\t%u transactions\n",
                 stats.comm, pid, stats.bytes, stats.nr_trans);
-		for (peer = buf; *peer != NULL; peer = peer + sizeof(struct binder_peer)) {
+		for (peer = (struct binder_peer *)buf; peer != NULL; peer = peer + sizeof(struct binder_peer)) {
 			printf("\t\t%s\t%u\t%u\n", peer->comm, peer->pid, peer->uid);
 }
 	}
-	else if (strcmp(command, "stop"))
+	else if (strcmp(command, "stop")) {
 		if (syscall(244, pid, 0)== -1) {
                         fprintf(stderr, "Error processing pid %u: %s\n",
                 pid, strerror(errno));
                 }
+	}
 	else
 		printf("Error: Invalid argument\n");
- 
+ 	
+	free(buf);
 	return 0;
 }
