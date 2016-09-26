@@ -17,47 +17,54 @@ int main(int argc, char **argv)
 	int is_invalid = 0;
 	long count, i;
 
-	if (argc != 3) {
-		is_invalid = 1;
-	/*	goto err_handle;*/
-	}
 	pid = (pid_t)atoi(argv[0]);
-	if ((int)pid == 0) {
+
+
+	if (argc != 3)
 		is_invalid = 1;
-/*		goto err_handle;*/
-	}
+
+
+	if ((int)pid == 0)
+		is_invalid = 1;
 
 	if (strcmp(argv[1], "start") == 0) {
+
 		if (syscall(244, pid, 1) != 0)
 			is_invalid = 2;
-/*			goto err_handle;*/
+
 	} else if (strcmp(argv[1], "print") == 0) {
+
 		count = syscall(245, pid, stats, buf, &size);
+
 		if (count < 0L)
 			is_invalid = 2;
-/*			goto err_handle;*/
+
 		peer = (struct binder_peer *)buf;
 		printf("%s (%u):\t%u bytes\t%u transactions\n",
 		       stats->comm, pid, stats->bytes, stats->nr_trans);
+
 		for (i = 0L; i < count; i++)
 			printf("\t\t%s\t%u\t%u\n", peer[i].comm,
 			       peer[i].pid, peer[i].uid);
+
+		free(peer);
+
 	} else if (strcmp(argv[1], "stop") == 0) {
 		if (syscall(244, pid, 0) != 0)
 			is_invalid = 2;
-/*			goto err_handle;*/
-	} else {
-		is_invalid = 1;
-/*		goto err_handle;*/
-	}
 
-/*err_handle:*/
+	} else
+		is_invalid = 1;
+
+/*err_handle*/
 if (is_invalid == 1)
 	fprintf(stderr, "Error: Invalid argument\n");
+
 else if (is_invalid == 2)
 	fprintf(stderr, "Error processing pid %u: %s\n",
 	pid, strerror(errno));
-/*terminate:*/
+
+/*terminate*/
 free(buf);
 free(stats);
 return 0;
