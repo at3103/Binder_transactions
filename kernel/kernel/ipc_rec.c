@@ -78,11 +78,11 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 			break;
 		}
 		if(data_node->pid == from_proc) {
-			_add_transaction(data_node, from_proc, data_size, 1);
+			_add_transaction(data_node, to_proc, data_size, 1);
 			flag_proc++;
 		}
 		if(data_node->pid == to_proc) {
-			_add_transaction(data_node, to_proc, data_size, 0);
+			_add_transaction(data_node, from_proc, data_size, 0);
 			flag_proc++;
 		}
 		if (flag_proc == 2)
