@@ -21,6 +21,7 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 	result->stats.nr_trans = 0; 
 	result->stats.bytes = 0;
 	result->pid = pid;
+	result->state = state;
 	INIT_LIST_HEAD(&(result->list));
 
 	return result;
@@ -32,12 +33,11 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 	struct binder_proc_data *data_node;
 
 	found = (struct list_head *)NULL;
-	if (binder_trans_tail == (struct binder_proc_data *)NULL) {
+	if (binder_trans_head == (struct binder_proc_data *)NULL) {
 		if (state == 1) {
 			binder_trans_head = _init_binder_trans_node(pid, state); 
 			if (binder_trans_head == (struct binder_proc_data *)NULL)
 				return -1;
-			binder_trans_tail = binder_trans_head;
 		} else
 			return 0;
 	}
@@ -53,13 +53,12 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 			data_node = _init_binder_trans_node(pid, state); 
 			if (data_node == (struct binder_proc_data *)NULL)
 				return -1;
-			list_add(&(data_node->list), &(binder_trans_tail->list));
-			binder_trans_tail = data_node;
+			list_add_tail(&(data_node->list), &(binder_trans_head->list));
 		} else
 			return 0;
 	} else
 		data_node->state = state;
-	printk("\n\n%s\n\n", binder_trans_tail->stats.comm);
+	//printk("\n\n%s\n\n", binder_trans_head->list->prev->stats.comm);
 
 	return 0;
 }
@@ -73,7 +72,7 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	void *curbuf = buf;
 	long result = 0L;
 
-	if (binder_trans_tail == (struct binder_proc_data *)NULL)
+	if (binder_trans_head == (struct binder_proc_data *)NULL)
 		return -1;
 	list_for_each(current_n, &(binder_trans_head->list)) {
 		data_node = list_entry(current_n, struct binder_proc_data, list);

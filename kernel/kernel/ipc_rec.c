@@ -19,8 +19,7 @@
 #include <hw2/binder_utils.h>
 
 DEFINE_MUTEX(ipc_rec_lock);
-struct binder_proc_data *binder_trans_head = (struct binder_proc_data *)NULL,
-			*binder_trans_tail = (struct binder_proc_data *)NULL;
+struct binder_proc_data *binder_trans_head = (struct binder_proc_data *)NULL;
 
 struct binder_peers_wrapper *_init_binder_peers_node(pid_t pid)
 {
@@ -65,7 +64,7 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 	struct list_head *current_n;
 	struct binder_proc_data *data_node;
 
-	if (binder_trans_tail == (struct binder_proc_data *)NULL)
+	if (binder_trans_head == (struct binder_proc_data *)NULL)
 		return;
 	list_for_each(current_n, &(binder_trans_head->list)) {
 		data_node = list_entry(current_n, struct binder_proc_data,
