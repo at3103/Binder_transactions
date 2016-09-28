@@ -15,7 +15,6 @@
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/gfp.h>
-#include <linux/printk.h>
 #include <hw2/binder_utils.h>
 
 DEFINE_MUTEX(ipc_rec_lock);

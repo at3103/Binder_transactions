@@ -2,3 +2,4 @@
 *.so
 *~
 *checkpatch.pl
+user/binder_info
