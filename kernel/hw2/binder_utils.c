@@ -3,7 +3,6 @@
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/gfp.h>
-#include <linux/printk.h>
 #include <hw2/binder_utils.h>
 
 struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
@@ -25,6 +24,20 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 	INIT_LIST_HEAD(&(result->list));
 
 	return result;
+}
+
+void free_node(struct binder_proc_data* node) {
+	struct binder_peers_wrapper *helperval;
+	struct list_head *current_n, *helper;
+	current_n = &(node->peers_head->list);
+	while(!list_empty(current_n)) {
+		helper = current_n->next;
+		helperval = list_entry(current_n, struct binder_peers_wrapper, list);
+		list_del(current_n);
+		kfree(helperval);
+		current_n = helper;
+	}
+	kfree(node);
 }
 
 SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
@@ -56,9 +69,10 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 			list_add_tail(&(data_node->list), &(binder_trans_head->list));
 		} else
 			return 0;
-	} else
-		data_node->state = state;
-	//printk("\n\n%s\n\n", binder_trans_head->list->prev->stats.comm);
+	} else {
+		list_del(&(data_node->list));
+		free_node(data_node);
+	}
 
 	return 0;
 }

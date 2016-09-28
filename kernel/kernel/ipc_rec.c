@@ -15,7 +15,6 @@
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/gfp.h>
-#include <linux/printk.h>
 #include <hw2/binder_utils.h>
 
 DEFINE_MUTEX(ipc_rec_lock);
@@ -56,7 +55,6 @@ void _add_transaction(struct binder_proc_data *data_node,
 	}
 	data_node->stats.nr_trans++;
 	data_node->stats.bytes += data_size;
-	printk("\n\n%s\n\n", data_node->peers_tail->peer.comm);
 }
 
 void binder_trans_notify(int from_proc, int to_proc, int data_size)
