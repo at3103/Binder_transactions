@@ -36,7 +36,7 @@ struct binder_peers_wrapper *_init_binder_peers_node(pid_t pid)
 }
 
 void _add_transaction(struct binder_proc_data *data_node,
-		     int partner, int data_size)
+		     int partner, int data_size, int trans_flag)
 {
 	struct binder_peers_wrapper *data_n;
 	int found = 0;
@@ -54,9 +54,10 @@ void _add_transaction(struct binder_proc_data *data_node,
 		list_add(&(data_n->list), &(data_node->peers_tail->list));
 		data_node->peers_tail = data_n;
 	}
-	data_node->stats.nr_trans++;
-	data_node->stats.bytes += data_size;
-	printk("\n\n%s\n\n", data_node->peers_tail->peer.comm);
+	if(trans_flag) {
+		data_node->stats.nr_trans++;
+		data_node->stats.bytes += data_size;
+	}
 }
 
 void binder_trans_notify(int from_proc, int to_proc, int data_size)
@@ -72,12 +73,12 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 		if(data_node->state != 1)
 			continue;
 		if(data_node->pid == (pid_t)from_proc && from_proc == to_proc) {
-			_add_transaction(data_node, from_proc, data_size);
-			continue;
+			_add_transaction(data_node, from_proc, data_size, 1);
+			break;
 		}
 		if(data_node->pid == from_proc)
-			_add_transaction(data_node, to_proc, data_size);
+			_add_transaction(data_node, to_proc, data_size, 1);
 		if(data_node->pid == to_proc)
-			_add_transaction(data_node, from_proc, data_size);
+			_add_transaction(data_node, from_proc, data_size, 0);
 	}
 }
