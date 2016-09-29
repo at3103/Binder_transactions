@@ -64,6 +64,7 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 {
 	struct list_head *current_n;
 	struct binder_proc_data *data_node;
+	int flag_proc = 0;
 
 	if (binder_trans_head == (struct binder_proc_data *)NULL)
 		return;
@@ -76,9 +77,15 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 			_add_transaction(data_node, from_proc, data_size, 1);
 			break;
 		}
-		if(data_node->pid == from_proc)
+		if(data_node->pid == from_proc) {
 			_add_transaction(data_node, to_proc, data_size, 1);
-		if(data_node->pid == to_proc)
+			flag_proc++;
+		}
+		if(data_node->pid == to_proc) {
 			_add_transaction(data_node, from_proc, data_size, 0);
+			flag_proc++;
+		}
+		if (flag_proc == 2)
+			break;
 	}
 }
