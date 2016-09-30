@@ -30,13 +30,14 @@ void free_node(struct binder_proc_data* node) {
 	struct binder_peers_wrapper *helperval;
 	struct list_head *current_n, *helper;
 	current_n = &(node->peers_head->list);
-	while(!list_empty(current_n)) {
-		helper = current_n->next;
-		helperval = list_entry(current_n, struct binder_peers_wrapper, list);
-		list_del(current_n);
-		kfree(helperval);
-		current_n = helper;
-	}
+	if(node->peers_head != (struct binder_peers_wrapper *)NULL)
+		while(!list_empty(current_n)) {
+			helper = current_n->next;
+			helperval = list_entry(current_n, struct binder_peers_wrapper, list);
+			list_del(current_n);
+			kfree(helperval);
+			current_n = helper;
+		}
 	kfree(node);
 }
 
