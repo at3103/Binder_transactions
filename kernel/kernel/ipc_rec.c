@@ -25,7 +25,7 @@ DEFINE_SPINLOCK(my_binder_spin_lock);
 struct binder_peers_wrapper *_init_binder_peers_node(pid_t pid)
 {
 	struct binder_peers_wrapper *result = (struct binder_peers_wrapper *)
-		kmalloc(sizeof(struct binder_proc_data), 0);
+		kmalloc(sizeof(struct binder_proc_data), GFP_KERNEL);
 	struct task_struct *task = find_task_by_vpid(pid);
 
 	result->peer.uid = (uid_t)task->cred->gid;

@@ -13,7 +13,7 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 	if (task == (struct task_struct *)NULL)
 		return (struct binder_proc_data *)NULL;
 	result = (struct binder_proc_data *)
-		kmalloc(sizeof(struct binder_proc_data), __GFP_WAIT);
+		kmalloc(sizeof(struct binder_proc_data), GFP_KERNEL);
 	result->peers_head = (struct binder_peers_wrapper *)NULL;
 	result->peers_tail = (struct binder_peers_wrapper *)NULL;
 	strcpy(result->stats.comm, task->comm);
