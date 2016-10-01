@@ -15,16 +15,17 @@
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/gfp.h>
-#include <linux/printk.h>
 #include <hw2/binder_utils.h>
+#include <linux/spinlock.h>
 
 DEFINE_MUTEX(ipc_rec_lock);
 struct binder_proc_data *binder_trans_head = (struct binder_proc_data *)NULL;
+DEFINE_SPINLOCK(my_binder_spin_lock);
 
 struct binder_peers_wrapper *_init_binder_peers_node(pid_t pid)
 {
 	struct binder_peers_wrapper *result = (struct binder_peers_wrapper *)
-		kmalloc(sizeof(struct binder_proc_data), __GFP_WAIT);
+		kmalloc(sizeof(struct binder_proc_data), GFP_KERNEL);
 	struct task_struct *task = find_task_by_vpid(pid);
 
 	result->peer.uid = (uid_t)task->cred->gid;
@@ -68,6 +69,7 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 
 	if (binder_trans_head == (struct binder_proc_data *)NULL)
 		return;
+	spin_lock_irq(&my_binder_spin_lock);
 	list_for_each(current_n, &(binder_trans_head->list)) {
 		data_node = list_entry(current_n, struct binder_proc_data,
 				       list);
@@ -88,4 +90,5 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 		if (flag_proc == 2)
 			break;
 	}
+	spin_unlock_irq(&my_binder_spin_lock);
 }

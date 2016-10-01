@@ -1,6 +1,7 @@
 #include <linux/types.h>
 #ifndef YIYAYIYAYO
 #include <linux/list.h>
+#include <linux/spinlock.h>
 #endif
 
 #ifndef BINDERS_R_THERE
@@ -34,6 +35,7 @@ struct binder_proc_data {
 
 extern struct binder_proc_data *binder_trans_head;
 extern struct binder_proc_data *binder_trans_tail;
+extern spinlock_t my_binder_spin_lock;
 #endif
 
 #endif
