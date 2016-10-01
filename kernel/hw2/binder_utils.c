@@ -8,7 +8,11 @@
 struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 {
 	struct binder_proc_data *result;
-	struct task_struct *task = find_task_by_vpid(pid);
+	struct task_struct *task;
+
+	rcu_read_lock();
+	task = find_task_by_vpid(pid);
+	rcu_read_unlock();
 
 	if (task == (struct task_struct *)NULL)
 		return (struct binder_proc_data *)NULL;
