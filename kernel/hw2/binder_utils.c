@@ -3,6 +3,7 @@
 #include <linux/string.h>
 #include <linux/slab.h>
 #include <linux/gfp.h>
+#include <linux/errno.h>
 #include <hw2/binder_utils.h>
 
 struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
@@ -37,7 +38,9 @@ void free_node(struct binder_proc_data* node) {
 	if(node->peers_head != (struct binder_peers_wrapper *)NULL)
 		while(!list_empty(current_n)) {
 			helper = current_n->next;
-			helperval = list_entry(current_n, struct binder_peers_wrapper, list);
+			helperval = list_entry(current_n,
+					       struct binder_peers_wrapper,
+					       list);
 			list_del(current_n);
 			kfree(helperval);
 			current_n = helper;
@@ -57,7 +60,7 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 			binder_trans_head = _init_binder_trans_node(pid, state); 
 			if (binder_trans_head == (struct binder_proc_data *)NULL) {
 				spin_unlock_irq(&my_binder_spin_lock);
-				return -1;
+				return -ESRCH;
 			}
 		} else {
 			spin_unlock_irq(&my_binder_spin_lock);
@@ -76,7 +79,7 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 			data_node = _init_binder_trans_node(pid, state); 
 			if (data_node == (struct binder_proc_data *)NULL) {
 				spin_unlock_irq(&my_binder_spin_lock);
-				return -1;
+				return -ESRCH;
 			}
 			list_add_tail(&(data_node->list), &(binder_trans_head->list));
 		} else {
@@ -101,7 +104,7 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	long result = 0L;
 
 	if (binder_trans_head == (struct binder_proc_data *)NULL) {
-		return -1;
+		return -ENODATA;
 	}
 	spin_lock_irq(&my_binder_spin_lock);
 	list_for_each(current_n, &(binder_trans_head->list)) {
@@ -113,12 +116,12 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	}
 	if (found == (struct list_head *)NULL) {
 		spin_unlock_irq(&my_binder_spin_lock);
-		return -1;
+		return -ENODATA;
 	}
 	memcpy(stats, &(data_node->stats), sizeof(struct binder_stats));
 	if (*size < sizeof(struct binder_peer)) {
 		spin_unlock_irq(&my_binder_spin_lock);
-		return -1;
+		return -ENOMEM;
 	}
 	if (data_node->peers_tail == (struct binder_peers_wrapper *)NULL) {
 		spin_unlock_irq(&my_binder_spin_lock);
