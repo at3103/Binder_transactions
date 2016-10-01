@@ -101,7 +101,6 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	long result = 0L;
 
 	if (binder_trans_head == (struct binder_proc_data *)NULL) {
-		spin_unlock_irq(&my_binder_spin_lock);
 		return -1;
 	}
 	spin_lock_irq(&my_binder_spin_lock);
