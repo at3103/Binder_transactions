@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/syscall.h>
-#define YIYAYIYAYO
+#define INCLUDED_BY_TEST
 #include "../kernel/include/hw2/binder_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,45 +23,38 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Error: Invalid argument\n");
 		return 0;
 	}
-
 	pid = (pid_t)atoi(argv[2]);
-	if ((int)pid <= 0)
+	if ((int)pid <= 0) {
 		is_invalid = 3;
-
-	else if (strcmp(argv[1], "start") == 0) {
+	} else if (strcmp(argv[1], "start") == 0) {
 		if (syscall(244, pid, 1) != 0)
 			is_invalid = 2;
-
 	} else if (strcmp(argv[1], "print") == 0) {
 		buf = (void *)malloc(size);
 		stats = (struct binder_stats *)malloc(size_stat);
-
 		count = syscall(245, pid, stats, buf, &size);
 
-		if (count < 0L)
+		if (count < 0L) {
 			is_invalid = 2;
-
-		else {
-		peer = (struct binder_peer *)buf;
-		printf("%s (%u):\t%u bytes\t%u transactions\n",
-		       stats->comm, pid, stats->bytes, stats->nr_trans);
-		for (i = 0L; i < count; i++)
-			printf("\t\t%s\t%u\t%u\n", peer[i].comm,
-			       peer[i].pid, peer[i].uid);
+		} else {
+			peer = (struct binder_peer *)buf;
+			printf("%s (%u):\t%u bytes\t%u transactions\n",
+			       stats->comm, pid, stats->bytes, stats->nr_trans);
+			for (i = 0L; i < count; i++)
+				printf("\t\t%s\t%u\t%u\n", peer[i].comm,
+				       peer[i].pid, peer[i].uid);
 		}
 
 		free(buf);
 		free(stats);
-
 	} else if (strcmp(argv[1], "stop") == 0) {
 		if (syscall(244, pid, 0) != 0)
 			is_invalid = 2;
-
 	} else
 		is_invalid = 1;
 
 
-/*err_handle:*/
+	/* err_handle */
 	if (is_invalid == 1)
 		fprintf(stderr, "Error: Invalid argument\n");
 	else if (is_invalid == 2)

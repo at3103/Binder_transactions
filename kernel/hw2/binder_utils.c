@@ -7,6 +7,7 @@
 #include <asm/uaccess.h>
 #include <hw2/binder_utils.h>
 
+/* Initialize a new binder_proc_data. */
 struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 {
 	struct binder_proc_data *result;
@@ -21,7 +22,6 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 	result = (struct binder_proc_data *)
 		kmalloc(sizeof(struct binder_proc_data), GFP_KERNEL);
 	result->peers_head = (struct binder_peers_wrapper *)NULL;
-	result->peers_tail = (struct binder_peers_wrapper *)NULL;
 	strcpy(result->stats.comm, task->comm);
 	result->stats.nr_trans = 0;
 	result->stats.bytes = 0;
@@ -32,13 +32,13 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 	return result;
 }
 
-void free_node(struct binder_proc_data *node)
-{
+/* Completely release memory of a binder_proc_data. */
+void _free_node(struct binder_proc_data* node) {
 	struct binder_peers_wrapper *helperval;
-	struct list_head *current_n, *helper;
-	current_n = &(node->peers_head->list);
-	if (node->peers_head != (struct binder_peers_wrapper *)NULL)
-		while (!list_empty(current_n)) {
+	struct list_head *current_n = &(node->peers_head->list), *helper;
+
+	if(node->peers_head != (struct binder_peers_wrapper *)NULL)
+		while(!list_empty(current_n)) {
 			helper = current_n->next;
 			helperval = list_entry(current_n,
 					       struct binder_peers_wrapper,
@@ -52,18 +52,18 @@ void free_node(struct binder_proc_data *node)
 
 SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 {
-	struct list_head *current_n, *found;
+	struct list_head *current_n, *found = (struct list_head *)NULL;
 	struct binder_proc_data *data_node;
 
-	found = (struct list_head *)NULL;
 	spin_lock_irq(&my_binder_spin_lock);
-	if (binder_trans_head ==
-		(struct binder_proc_data *)NULL) {
+	
+	/* Init binder_trans_head if needed. */
+	if (binder_trans_head == (struct binder_proc_data *)NULL) {
 		if (state == 1) {
 			binder_trans_head =
 			_init_binder_trans_node(pid, state);
 			if (binder_trans_head ==
-				(struct binder_proc_data *)NULL) {
+			    (struct binder_proc_data *)NULL) {
 				spin_unlock_irq(&my_binder_spin_lock);
 				return -ESRCH;
 			}
@@ -80,6 +80,7 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 			break;
 		}
 	}
+	/* New node add/existing node delete. */
 	if (found == (struct list_head *)NULL) {
 		if (state == 1) {
 			data_node = _init_binder_trans_node(pid, state);
@@ -95,9 +96,10 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 		}
 	} else if (state == 0) {
 		list_del(&(data_node->list));
-		free_node(data_node);
+		_free_node(data_node);
 	}
 	spin_unlock_irq(&my_binder_spin_lock);
+
 	return 0;
 }
 
@@ -126,6 +128,7 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	if (check1 || check2)
 		return -EFAULT;
 
+	/* Find target node and sanity checks. */
 	if (binder_trans_head == (struct binder_proc_data *)NULL)
 		return -ENODATA;
 
@@ -148,7 +151,9 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 		spin_unlock_irq(&my_binder_spin_lock);
 		return -ENOMEM;
 	}
-	if (data_node->peers_tail == (struct binder_peers_wrapper *)NULL) {
+	
+	/* Copy peer transactions. */
+	if (data_node->peers_head == (struct binder_peers_wrapper *)NULL) {
 		spin_unlock_irq(&my_binder_spin_lock);
 		return 0;
 	}
