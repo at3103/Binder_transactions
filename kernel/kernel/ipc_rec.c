@@ -82,8 +82,7 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 		if(data_node->pid == from_proc) {
 			_add_transaction(data_node, to_proc, data_size, 1);
 			flag_proc++;
-		}
-		if(data_node->pid == to_proc) {
+		} else if(data_node->pid == to_proc) {
 			_add_transaction(data_node, from_proc, data_size, 0);
 			flag_proc++;
 		}

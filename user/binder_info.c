@@ -17,49 +17,56 @@ int main(int argc, char **argv)
 	struct binder_peer *peer = (struct binder_peer *)NULL;
 	int is_invalid = 0;
 	long count, i;
+	size_t size_stat = sizeof(struct binder_stats);
 
 	if (argc != 3) {
-		is_invalid = 1;
-		goto err_handle;
-	}
-	pid = (pid_t)atoi(argv[2]);
-	if ((int)pid == 0) {
-		is_invalid = 1;
-		goto err_handle;
+		fprintf(stderr, "Error: Invalid argument\n");
+		return 0;
 	}
 
-	if (strcmp(argv[1], "start") == 0) {
+	pid = (pid_t)atoi(argv[2]);
+	if ((int)pid == 0)
+		is_invalid = 1;
+
+	else if (strcmp(argv[1], "start") == 0) {
 		if (syscall(244, pid, 1) != 0)
-			goto err_handle;
+			is_invalid = 2;
+
 	} else if (strcmp(argv[1], "print") == 0) {
 		buf = (void *)malloc(size);
-		stats = (struct binder_stats *)malloc(sizeof(struct binder_stats));
+		stats = (struct binder_stats *)malloc(size_stat);
+
 		count = syscall(245, pid, stats, buf, &size);
+
 		if (count < 0L)
-			goto err_handle;
+			is_invalid = 2;
+
+		else {
 		peer = (struct binder_peer *)buf;
 		printf("%s (%u):\t%u bytes\t%u transactions\n",
 		       stats->comm, pid, stats->bytes, stats->nr_trans);
 		for (i = 0L; i < count; i++)
 			printf("\t\t%s\t%u\t%u\n", peer[i].comm,
 			       peer[i].pid, peer[i].uid);
+		}
+
+		free(buf);
+		free(stats);
+
 	} else if (strcmp(argv[1], "stop") == 0) {
 		if (syscall(244, pid, 0) != 0)
-			goto err_handle;
-	} else {
-		is_invalid = 1;
-		goto err_handle;
-	}
-	goto terminate;
+			is_invalid = 2;
 
-err_handle:
-	if (is_invalid)
+	} else
+		is_invalid = 1;
+
+
+/*err_handle:*/
+	if (is_invalid == 1)
 		fprintf(stderr, "Error: Invalid argument\n");
-	else
-                fprintf(stderr, "Error processing pid %u: %s\n",
+	else if (is_invalid == 2)
+		fprintf(stderr, "Error processing pid %u: %s\n",
 			pid, strerror(errno));
-terminate:
-	free(buf);
-	free(stats);
+
 	return 0;
 }
