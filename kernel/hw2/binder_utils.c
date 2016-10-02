@@ -4,6 +4,9 @@
 #include <linux/slab.h>
 #include <linux/gfp.h>
 #include <linux/errno.h>
+
+#include <asm/uaccess.h>
+
 #include <hw2/binder_utils.h>
 
 struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
@@ -86,7 +89,7 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 			spin_unlock_irq(&my_binder_spin_lock);
 			return 0;
 		}
-	} else {
+	} else if (state == 0) {
 		list_del(&(data_node->list));
 		free_node(data_node);
 	}
@@ -102,6 +105,7 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	struct binder_peers_wrapper *peers_node;
 	void *curbuf = buf;
 	long result = 0L;
+	int cpy_res;
 
 	if (binder_trans_head == (struct binder_proc_data *)NULL) {
 		return -ENODATA;
@@ -118,8 +122,8 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 		spin_unlock_irq(&my_binder_spin_lock);
 		return -ENODATA;
 	}
-	memcpy(stats, &(data_node->stats), sizeof(struct binder_stats));
-	if (*size < sizeof(struct binder_peer)) {
+	cpy_res = copy_to_user(stats, &(data_node->stats), sizeof(struct binder_stats));
+	if (*size < sizeof(struct binder_peer) || cpy_res) {
 		spin_unlock_irq(&my_binder_spin_lock);
 		return -ENOMEM;
 	}
@@ -128,11 +132,15 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 		return 0;
 	}
 	list_for_each_entry(peers_node, &(data_node->peers_head->list), list) {
-		memcpy(curbuf, &(peers_node->peer), sizeof(struct binder_peer));
+		cpy_res = copy_to_user(curbuf, &(peers_node->peer), sizeof(struct binder_peer));
 		result++;
 		curbuf += sizeof(struct binder_peer);
-		if (*size < curbuf - buf + sizeof(struct binder_peer))
+		if (*size < curbuf - buf + sizeof(struct binder_peer) || cpy_res)
 			break;
+	}
+	if(cpy_res) {
+		spin_unlock_irq(&my_binder_spin_lock);
+		return -1;
 	}
 	*size = curbuf - buf;
 	spin_unlock_irq(&my_binder_spin_lock);
