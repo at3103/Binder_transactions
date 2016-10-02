@@ -25,8 +25,8 @@ int main(int argc, char **argv)
 	}
 
 	pid = (pid_t)atoi(argv[2]);
-	if ((int)pid == 0)
-		is_invalid = 1;
+	if ((int)pid <= 0)
+		is_invalid = 3;
 
 	else if (strcmp(argv[1], "start") == 0) {
 		if (syscall(244, pid, 1) != 0)
@@ -67,6 +67,9 @@ int main(int argc, char **argv)
 	else if (is_invalid == 2)
 		fprintf(stderr, "Error processing pid %u: %s\n",
 			pid, strerror(errno));
+	else if (is_invalid == 3)
+		fprintf(stderr, "Error: Invalid pid %d\n ",
+			pid);
 
 	return 0;
 }
