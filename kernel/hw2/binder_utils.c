@@ -23,7 +23,7 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 		kmalloc(sizeof(struct binder_proc_data), GFP_KERNEL);
 	result->peers_head = (struct binder_peers_wrapper *)NULL;
 	strcpy(result->stats.comm, task->comm);
-	result->stats.nr_trans = 0; 
+	result->stats.nr_trans = 0;
 	result->stats.bytes = 0;
 	result->pid = pid;
 	result->state = state;
@@ -33,12 +33,13 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 }
 
 /* Completely release memory of a binder_proc_data. */
-void _free_node(struct binder_proc_data* node) {
+void _free_node(struct binder_proc_data *node)
+{
 	struct binder_peers_wrapper *helperval;
 	struct list_head *current_n = &(node->peers_head->list), *helper;
 
-	if(node->peers_head != (struct binder_peers_wrapper *)NULL)
-		while(!list_empty(current_n)) {
+	if (node->peers_head != (struct binder_peers_wrapper *)NULL)
+		while (!list_empty(current_n)) {
 			helper = current_n->next;
 			helperval = list_entry(current_n,
 					       struct binder_peers_wrapper,
@@ -82,7 +83,7 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 	/* New node add/existing node delete. */
 	if (found == (struct list_head *)NULL) {
 		if (state == 1) {
-			data_node = _init_binder_trans_node(pid, state); 
+			data_node = _init_binder_trans_node(pid, state);
 			if (data_node == (struct binder_proc_data *)NULL) {
 				spin_unlock_irq(&my_binder_spin_lock);
 				return -ESRCH;
@@ -113,13 +114,13 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	int cpy_res;
 
 	/* Find target node and sanity checks. */
-	if (binder_trans_head == (struct binder_proc_data *)NULL) {
+	if (binder_trans_head == (struct binder_proc_data *)NULL)
 		return -ENODATA;
-	}
 	spin_lock_irq(&my_binder_spin_lock);
 	list_for_each(current_n, &(binder_trans_head->list)) {
-		data_node = list_entry(current_n, struct binder_proc_data, list);
-		if(data_node->pid == pid) {
+		data_node = list_entry(current_n, struct binder_proc_data,
+				       list);
+		if (data_node->pid == pid) {
 			found = current_n;
 			break;
 		}
@@ -143,8 +144,9 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 		return 0;
 	}
 	list_for_each_entry(peers_node, &(data_node->peers_head->list), list) {
-		if ((cpy_res = copy_to_user(curbuf, &(peers_node->peer),
-					   sizeof(struct binder_peer)))) {
+		cpy_res = copy_to_user(curbuf, &(peers_node->peer),
+				       sizeof(struct binder_peer))
+		if (cpy_res) {
 			spin_unlock_irq(&my_binder_spin_lock);
 			return cpy_res;
 		}
