@@ -47,15 +47,15 @@ void _add_transaction(struct binder_proc_data *data_node,
 		data_node->peers_tail = data_node->peers_head;
 	}
 	list_for_each_entry(data_n, &(data_node->peers_head->list), list) {
-		if(data_n->peer.pid == (pid_t)partner)
+		if (data_n->peer.pid == (pid_t)partner)
 			found = 1;
 	}
-	if(!found) {
+	if (!found) {
 		data_n = _init_binder_peers_node((pid_t)partner);
 		list_add(&(data_n->list), &(data_node->peers_tail->list));
 		data_node->peers_tail = data_n;
 	}
-	if(trans_flag) {
+	if (trans_flag) {
 		data_node->stats.nr_trans++;
 		data_node->stats.bytes += data_size;
 	}
@@ -66,6 +66,7 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 	struct list_head *current_n;
 	struct binder_proc_data *data_node;
 	int flag_proc = 0;
+	pid_t pid;
 
 	if (binder_trans_head == (struct binder_proc_data *)NULL)
 		return;
@@ -73,16 +74,19 @@ void binder_trans_notify(int from_proc, int to_proc, int data_size)
 	list_for_each(current_n, &(binder_trans_head->list)) {
 		data_node = list_entry(current_n, struct binder_proc_data,
 				       list);
-		if(data_node->state != 1)
+
+		pid = data_node->pid;
+
+		if (data_node->state != 1)
 			continue;
-		if(data_node->pid == (pid_t)from_proc && from_proc == to_proc) {
+		if (pid == (pid_t)from_proc && from_proc == to_proc) {
 			_add_transaction(data_node, from_proc, data_size, 1);
 			break;
 		}
-		if(data_node->pid == from_proc) {
+		if (pid == from_proc) {
 			_add_transaction(data_node, to_proc, data_size, 1);
 			flag_proc++;
-		} else if(data_node->pid == to_proc) {
+		} else if (pid == to_proc) {
 			_add_transaction(data_node, from_proc, data_size, 0);
 			flag_proc++;
 		}
