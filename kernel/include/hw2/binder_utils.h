@@ -1,5 +1,6 @@
 #include <linux/types.h>
-#ifndef YIYAYIYAYO
+
+#ifndef INCLUDED_BY_TEST
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #endif
@@ -19,14 +20,15 @@ struct binder_stats {
 	unsigned int bytes;	/* Total number of bytes transferred */
 };
 
-#ifndef YIYAYIYAYO
+
+#ifndef INCLUDED_BY_TEST
 struct binder_peers_wrapper {
 	struct binder_peer peer;
 	struct list_head list;
 };
 
 struct binder_proc_data {
-	struct binder_peers_wrapper *peers_head, *peers_tail;
+	struct binder_peers_wrapper *peers_head;
 	struct binder_stats stats;
 	int state;
 	pid_t pid;
@@ -34,8 +36,8 @@ struct binder_proc_data {
 };
 
 extern struct binder_proc_data *binder_trans_head;
-extern struct binder_proc_data *binder_trans_tail;
 extern spinlock_t my_binder_spin_lock;
 #endif
+
 
 #endif
