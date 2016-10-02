@@ -65,8 +65,7 @@ int main(int argc, char **argv)
 	if (is_invalid == 1)
 		fprintf(stderr, "Error: Invalid argument\n");
 	else if (is_invalid == 2)
-		fprintf(stderr, "Error processing pid %u: %s\n",
-			pid, strerror(errno));
+		fprintf(stderr, "Error: %s\n", strerror(errno));
 	else if (is_invalid == 3)
 		fprintf(stderr, "Error: Invalid pid %d\n ",
 			pid);

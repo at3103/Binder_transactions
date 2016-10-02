@@ -23,7 +23,7 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 	result->peers_head = (struct binder_peers_wrapper *)NULL;
 	result->peers_tail = (struct binder_peers_wrapper *)NULL;
 	strcpy(result->stats.comm, task->comm);
-	result->stats.nr_trans = 0; 
+	result->stats.nr_trans = 0;
 	result->stats.bytes = 0;
 	result->pid = pid;
 	result->state = state;
@@ -32,12 +32,13 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 	return result;
 }
 
-void free_node(struct binder_proc_data* node) {
+void free_node(struct binder_proc_data *node)
+{
 	struct binder_peers_wrapper *helperval;
 	struct list_head *current_n, *helper;
 	current_n = &(node->peers_head->list);
-	if(node->peers_head != (struct binder_peers_wrapper *)NULL)
-		while(!list_empty(current_n)) {
+	if (node->peers_head != (struct binder_peers_wrapper *)NULL)
+		while (!list_empty(current_n)) {
 			helper = current_n->next;
 			helperval = list_entry(current_n,
 					       struct binder_peers_wrapper,
@@ -56,10 +57,13 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 
 	found = (struct list_head *)NULL;
 	spin_lock_irq(&my_binder_spin_lock);
-	if (binder_trans_head == (struct binder_proc_data *)NULL) {
+	if (binder_trans_head ==
+		(struct binder_proc_data *)NULL) {
 		if (state == 1) {
-			binder_trans_head = _init_binder_trans_node(pid, state); 
-			if (binder_trans_head == (struct binder_proc_data *)NULL) {
+			binder_trans_head =
+			_init_binder_trans_node(pid, state);
+			if (binder_trans_head ==
+				(struct binder_proc_data *)NULL) {
 				spin_unlock_irq(&my_binder_spin_lock);
 				return -ESRCH;
 			}
@@ -69,7 +73,8 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 		}
 	}
 	list_for_each(current_n, &binder_trans_head->list) {
-		data_node = list_entry(current_n, struct binder_proc_data, list);
+		data_node = list_entry(current_n,
+			struct binder_proc_data, list);
 		if (data_node->pid == pid) {
 			found = current_n;
 			break;
@@ -77,12 +82,13 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 	}
 	if (found == (struct list_head *)NULL) {
 		if (state == 1) {
-			data_node = _init_binder_trans_node(pid, state); 
+			data_node = _init_binder_trans_node(pid, state);
 			if (data_node == (struct binder_proc_data *)NULL) {
 				spin_unlock_irq(&my_binder_spin_lock);
 				return -ESRCH;
 			}
-			list_add_tail(&(data_node->list), &(binder_trans_head->list));
+			list_add_tail(&(data_node->list),
+				&(binder_trans_head->list));
 		} else {
 			spin_unlock_irq(&my_binder_spin_lock);
 			return 0;
@@ -102,16 +108,32 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	struct binder_proc_data *data_node;
 	struct binder_peers_wrapper *peers_node;
 	void *curbuf = buf;
+	size_t *sz = size;
 	long result = 0L;
 	int cpy_res;
+	long check1;
+	long check2;
 
-	if (binder_trans_head == (struct binder_proc_data *)NULL) {
+	check1 = copy_from_user(sz, size, sizeof(size));
+	check2 = copy_from_user(curbuf, buf, sizeof(buf));
+
+	if (buf == NULL)
+		return -EINVAL;
+
+	if (*size < 1024 || *size < sizeof(struct binder_peer))
+		return -EINVAL;
+
+	if (check1 || check2)
+		return -EFAULT;
+
+	if (binder_trans_head == (struct binder_proc_data *)NULL)
 		return -ENODATA;
-	}
+
 	spin_lock_irq(&my_binder_spin_lock);
 	list_for_each(current_n, &(binder_trans_head->list)) {
-		data_node = list_entry(current_n, struct binder_proc_data, list);
-		if(data_node->pid == pid) {
+		data_node = list_entry(current_n,
+			struct binder_proc_data, list);
+		if (data_node->pid == pid) {
 			found = current_n;
 			break;
 		}
@@ -120,7 +142,8 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 		spin_unlock_irq(&my_binder_spin_lock);
 		return -ENODATA;
 	}
-	cpy_res = copy_to_user(stats, &(data_node->stats), sizeof(struct binder_stats));
+	cpy_res = copy_to_user(stats, &(data_node->stats),
+		sizeof(struct binder_stats));
 	if (*size < sizeof(struct binder_peer) || cpy_res) {
 		spin_unlock_irq(&my_binder_spin_lock);
 		return -ENOMEM;
@@ -130,13 +153,17 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 		return 0;
 	}
 	list_for_each_entry(peers_node, &(data_node->peers_head->list), list) {
-		cpy_res = copy_to_user(curbuf, &(peers_node->peer), sizeof(struct binder_peer));
+
+		if (*size >= curbuf - buf + sizeof(struct binder_peer)) {
+			cpy_res = copy_to_user(curbuf, &(peers_node->peer),
+				sizeof(struct binder_peer));
+			curbuf += sizeof(struct binder_peer);
+		}
 		result++;
-		curbuf += sizeof(struct binder_peer);
-		if (*size < curbuf - buf + sizeof(struct binder_peer) || cpy_res)
-			break;
+		if (cpy_res)
+			return -EFAULT;
 	}
-	if(cpy_res) {
+	if (cpy_res) {
 		spin_unlock_irq(&my_binder_spin_lock);
 		return -1;
 	}
