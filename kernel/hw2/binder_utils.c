@@ -5,7 +5,6 @@
 #include <linux/gfp.h>
 #include <linux/errno.h>
 #include <asm/uaccess.h>
-#include <asm/uaccess.h>
 #include <hw2/binder_utils.h>
 
 struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
