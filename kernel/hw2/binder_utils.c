@@ -89,7 +89,7 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 			spin_unlock_irq(&my_binder_spin_lock);
 			return 0;
 		}
-	} else {
+	} else if (state == 0) {
 		list_del(&(data_node->list));
 		free_node(data_node);
 	}
