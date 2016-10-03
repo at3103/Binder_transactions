@@ -54,7 +54,6 @@ int main(int argc, char **argv)
 	} else
 		is_invalid = 1;
 
-
 	/* err_handle */
 	if (is_invalid == 1)
 		fprintf(stderr, "Error: Invalid argument\n");

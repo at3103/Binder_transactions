@@ -145,6 +145,7 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 
 	/* Find target node and sanity checks. */
 	if (binder_trans_head == (struct binder_proc_data *)NULL) {
+		*size = 0;
 		kfree(sz);
 		return -ENODATA;
 	}
@@ -174,6 +175,7 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	/* Copy peer transactions. */
 	if (data_node->peers_head == (struct binder_peers_wrapper *)NULL) {
 		spin_unlock_irq(&my_binder_spin_lock);
+		*size = 0;
 		kfree(sz);
 		return 0;
 	}
