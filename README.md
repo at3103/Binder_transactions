@@ -4,7 +4,7 @@ Set the program to record IPC for the zygote process and start some new applicat
 
 *Answer:*
 
-No; Zygote doesn't do IPC, there are no transactions recorded for Zygote. Zygote could be the parent of all user-level applications. In other words, Zygote is responsible for `fork` new app processes when asked to.
+Zygote doesn't do IPC, there are no transactions recorded for Zygote; Zygote could be the parent of all user-level applications. In other words, Zygote is responsible for `fork` new app processes when asked to.
 
 ## Problem 2
 Set the program to record IPC for a number of applications and use the applications while you're recording IPC. Is there some set of common processes that all applications seem to communicate with? Why could that be?
