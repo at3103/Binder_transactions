@@ -33,12 +33,13 @@ struct binder_proc_data *_init_binder_trans_node(pid_t pid, int state)
 }
 
 /* Completely release memory of a binder_proc_data. */
-void _free_node(struct binder_proc_data* node) {
+void _free_node(struct binder_proc_data *node)
+{
 	struct binder_peers_wrapper *helperval;
 	struct list_head *current_n = &(node->peers_head->list), *helper;
 
-	if(node->peers_head != (struct binder_peers_wrapper *)NULL)
-		while(!list_empty(current_n)) {
+	if (node->peers_head != (struct binder_peers_wrapper *)NULL)
+		while (!list_empty(current_n)) {
 			helper = current_n->next;
 			helperval = list_entry(current_n,
 					       struct binder_peers_wrapper,
@@ -56,7 +57,7 @@ SYSCALL_DEFINE2(binder_rec, pid_t, pid, int, state)
 	struct binder_proc_data *data_node;
 
 	spin_lock_irq(&my_binder_spin_lock);
-	
+
 	/* Init binder_trans_head if needed. */
 	if (binder_trans_head == (struct binder_proc_data *)NULL) {
 		if (state == 1) {
@@ -109,28 +110,42 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	struct list_head *current_n, *found = (struct list_head *)NULL;
 	struct binder_proc_data *data_node;
 	struct binder_peers_wrapper *peers_node;
-	void *curbuf = buf;
-	size_t *sz = size;
+	void *curbuf = (void *)NULL;
+	size_t *sz = NULL;
 	long result = 0L;
 	int cpy_res;
 	long check1;
 	long check2;
 
+	sz = kmalloc(sizeof(size), GFP_KERNEL);
+
 	check1 = copy_from_user(sz, size, sizeof(size));
-	check2 = copy_from_user(curbuf, buf, sizeof(buf));
 
-	if (buf == NULL)
+	check2 = access_ok(VERIFY_READ, buf, (unsigned long) *sz);
+
+	if (check2)
+		curbuf = buf;
+
+	if (buf == NULL) {
+		kfree(sz);
 		return -EINVAL;
+	}
 
-	if (*size < 1024 || *size < sizeof(struct binder_peer))
+	if (*size < 1024 || *size < sizeof(struct binder_peer)) {
+		kfree(sz);
 		return -EINVAL;
+	}
 
-	if (check1 || check2)
+	if (check1 || !check2) {
+		kfree(sz);
 		return -EFAULT;
+	}
 
 	/* Find target node and sanity checks. */
-	if (binder_trans_head == (struct binder_proc_data *)NULL)
+	if (binder_trans_head == (struct binder_proc_data *)NULL) {
+		kfree(sz);
 		return -ENODATA;
+	}
 
 	spin_lock_irq(&my_binder_spin_lock);
 	list_for_each(current_n, &(binder_trans_head->list)) {
@@ -143,18 +158,21 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	}
 	if (found == (struct list_head *)NULL) {
 		spin_unlock_irq(&my_binder_spin_lock);
+		kfree(sz);
 		return -ENODATA;
 	}
 	cpy_res = copy_to_user(stats, &(data_node->stats),
 		sizeof(struct binder_stats));
 	if (*size < sizeof(struct binder_peer) || cpy_res) {
 		spin_unlock_irq(&my_binder_spin_lock);
+		kfree(sz);
 		return -ENOMEM;
 	}
-	
+
 	/* Copy peer transactions. */
 	if (data_node->peers_head == (struct binder_peers_wrapper *)NULL) {
 		spin_unlock_irq(&my_binder_spin_lock);
+		kfree(sz);
 		return 0;
 	}
 	list_for_each_entry(peers_node, &(data_node->peers_head->list), list) {
@@ -165,14 +183,18 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 			curbuf += sizeof(struct binder_peer);
 		}
 		result++;
-		if (cpy_res)
+		if (cpy_res) {
+			kfree(sz);
 			return -EFAULT;
+		}
 	}
 	if (cpy_res) {
 		spin_unlock_irq(&my_binder_spin_lock);
+		kfree(sz);
 		return -1;
 	}
 	*size = curbuf - buf;
 	spin_unlock_irq(&my_binder_spin_lock);
+	kfree(sz);
 	return result;
 }
