@@ -1,15 +1,16 @@
 # hmwk2-team18
+## Problem 1
+Set the program to record IPC for the zygote process and start some new applications. Is the zygote doing IPC? If not, what could be the role of zygote?
 
+*Answer:*
 
-Reason about Android IPC
+Zygote could be the parent of all user-level applications. In other words, Zygote is responsible for `fork` new app processes when asked to.
 
+## Problem 2
+Set the program to record IPC for a number of applications and use the applications while you're recording IPC. Is there some set of common processes that all applications seem to communicate with? Why could that be?
 
-
-Set the program to record IPC for a number of applications and 
-use the applications while you're recording IPC.
-Is there some set of common processes that all applications 
-seem to communicate with? Why could that be?
-
+*Answer:*
+```
     generic_arm64:/ # /data/misc/binder_info print 2446                                          
     droid.deskclock (2446):	23036 bytes	162 transactions
         surfaceflinger	840	1003
@@ -62,27 +63,19 @@ seem to communicate with? Why could that be?
         surfaceflinger	840	1003
         putmethod.latin	1172	10039
         d.process.acore	1702	10001
+```
 
+Yes. All the applciations listed above communicate with system_server, servicemanager and surfaceflinger. And almost all of the applications communicate with putmethod.latin with the exception of .android.camera. Almost all the applications communicate with a common set of processes, because these processes are very significant and critical to the smooth and efficient funcitoning of these applicaitons. These critical processes seem to form a common set among various applicaitons. 
 
+All the applications communicate with surfaceflinger becuase it is the android process that controls the screen. In most of the present android phones and in particular the adroid model which we are using as an emualtor have the screen as the primary mode of input. Hence, in order to use any of the feature of these applications, the input has to be received from the user via the surfaceflinger which controls the screen. Hence, all the applications communicate with surface flinger.
 
-  Yes. All the applciations listed above communicate with system_server, servicemanager 
-  and surfaceflinger. And almost all of the applications communicate with putmethod.latin 
-  with the exception of .android.camera. Almost all the applications communicate with 
-  a common set of processes, because these processes are very significant and critical
-  to the smooth and efficient funcitoning of these applicaitons. These critical processes
-  seem to form a common set among various applicaitons. 
-  
-  All the applications communicate with surfaceflinger becuase it is the android process
-  that controls the screen. In most of the present android phones and in particular the 
-  adroid model which we are using as an emualtor have the screen as the primary mode of 
-  input. Hence, in order to use any of the feature of these applications, the input has
-  to be received from the user via the surfaceflinger which controls the screen. Hence,
-  all the applications communicate with surface flinger.
-  
-  Similarly, all the processes communicate with the servicemanager which allocates
-  resources and manages the different services needed for the functioning of the 
-  android applications. 
-  
-  system_server is the one of the most critical process of the Android OS. Hence,
-  all the applications communicate with this process.
+Similarly, all the processes communicate with the servicemanager which allocates resources and manages the different services needed for the functioning of the android applications. 
 
+system_server is the one of the most critical process of the Android OS. Hence, all the applications communicate with this process.
+
+## Problem 3
+Calculate the average size of a Binder message. What does the size of the Binder messages tell you about the type of IPC messages being passed through Binder. Which other IPC mechanism may be a better choice for sharing very large amounts of data between applications?
+
+*Answer:*
+
+Around 100 bytes; The Binder messages are not very big, meaning there are not significant data exchanges between processes that passes through Binder, most probably signals; Files are better choices for IPC in extremely large scale, as it uses hard disk to store large amount data.
