@@ -133,7 +133,7 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 		return -EINVAL;
 	}
 
-	if (*size < 1024 || *size < sizeof(struct binder_peer)) {
+	if (*size < 4096 || *size < sizeof(struct binder_peer)) {
 		kfree(sz);
 		return -EINVAL;
 	}

@@ -11,7 +11,7 @@
 int main(int argc, char **argv)
 {
 	pid_t pid;
-	size_t size = 1024;
+	size_t size = 5000;
 	void *buf = NULL;
 	struct binder_stats *stats = (struct binder_stats *)NULL;
 	struct binder_peer *peer = (struct binder_peer *)NULL;
@@ -39,7 +39,8 @@ int main(int argc, char **argv)
 			peer = (struct binder_peer *)buf;
 			printf("%s (%u):\t%u bytes\t%u transactions\n",
 			       stats->comm, pid, stats->bytes, stats->nr_trans);
-			for (i = 0L; i < size; i += sizeof(struct binder_peer)) {
+			for (i = 0L; i < size;
+				i += sizeof(struct binder_peer)) {
 				printf("\t\t%s\t%u\t%u\n", peer->comm,
 				       peer->pid, peer->uid);
 				peer++;
