@@ -116,6 +116,8 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 	int cpy_res;
 	long check1;
 	long check2;
+	void *my_buf = kmalloc(*size, GFP_KERNEL);
+	int cpy_ct = 0;
 
 	sz = kmalloc(sizeof(size), GFP_KERNEL);
 
@@ -176,25 +178,26 @@ SYSCALL_DEFINE4(binder_stats, pid_t, pid, struct binder_stats *, stats,
 		return 0;
 	}
 	list_for_each_entry(peers_node, &(data_node->peers_head->list), list) {
-
-		if (*size >= curbuf - buf + sizeof(struct binder_peer)) {
-			cpy_res = copy_to_user(curbuf, &(peers_node->peer),
+		if (*size >= cpy_ct + sizeof(struct binder_peer)) {
+			memcpy(my_buf + cpy_ct, &(peers_node->peer),
 				sizeof(struct binder_peer));
-			curbuf += sizeof(struct binder_peer);
+			cpy_ct += sizeof(struct binder_peer);
 		}
 		result++;
-		if (cpy_res) {
-			kfree(sz);
-			return -EFAULT;
-		}
 	}
 	if (cpy_res) {
 		spin_unlock_irq(&my_binder_spin_lock);
 		kfree(sz);
 		return -1;
 	}
-	*size = curbuf - buf;
+	*size = cpy_ct;
 	spin_unlock_irq(&my_binder_spin_lock);
+	cpy_res = copy_to_user(buf, my_buf, cpy_ct);
+	if (cpy_res) {
+		kfree(sz);
+		return -EFAULT;
+	}
 	kfree(sz);
+	kfree(my_buf);
 	return result;
 }

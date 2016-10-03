@@ -33,16 +33,17 @@ int main(int argc, char **argv)
 		buf = (void *)malloc(size);
 		stats = (struct binder_stats *)malloc(size_stat);
 		count = syscall(245, pid, stats, buf, &size);
-
 		if (count < 0L) {
 			is_invalid = 2;
 		} else {
 			peer = (struct binder_peer *)buf;
 			printf("%s (%u):\t%u bytes\t%u transactions\n",
 			       stats->comm, pid, stats->bytes, stats->nr_trans);
-			for (i = 0L; i < count; i++)
-				printf("\t\t%s\t%u\t%u\n", peer[i].comm,
-				       peer[i].pid, peer[i].uid);
+			for (i = 0L; i < size; i += sizeof(struct binder_peer)) {
+				printf("\t\t%s\t%u\t%u\n", peer->comm,
+				       peer->pid, peer->uid);
+				peer++;
+			}
 		}
 
 		free(buf);
