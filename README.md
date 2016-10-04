@@ -4,7 +4,28 @@ Set the program to record IPC for the zygote process and start some new applicat
 
 *Answer:*
 
-Zygote doesn't do IPC, there are no transactions recorded for Zygote; Zygote could be the parent of all user-level applications. In other words, Zygote is responsible for `fork` new app processes when asked to.
+Zygote doesn't do IPC, there are no transactions recorded for Zygote; Zygote could be the parent of all applications. In other words, Zygote is responsible for `fork` new applicaiton processes both system and user applications when needed. This can be seen below in the process tree. 
+
+    root      846   1     1504124 72824 poll_sched 719aa53338 S zygote64
+    root      847   1     1142284 62148 poll_sched 00f3d3b8d0 S zygote
+    audioserver 848   1     22336  5112  binder_thr 00f0991828 S /system/bin/audioserver
+    cameraserver 849   1     15792  4316  binder_thr 00e8197828 S /system/bin/cameraserver
+    system    981   846   1656912 114440 SyS_epoll_ 719aa53218 S system_server
+    ##u0_a39    1173  846   1034308 52116 SyS_epoll_ 719aa53218 S com.android.inputmethod.latin
+    media_rw  1190  810   11800  2284  inotify_re 75936e6d10 S /system/bin/sdcard
+    ##radio     1365  846   1049476 59700 SyS_epoll_ 719aa53218 S com.android.phone
+    ##system    1381  846   1051592 46952 SyS_epoll_ 719aa53218 S com.android.settings
+    u0_a29    1472  846   1029856 44940 SyS_epoll_ 719aa53218 S com.android.deskclock
+    u0_a10    1551  846   1019032 38836 SyS_epoll_ 719aa53218 S android.ext.services
+    u0_a8     1598  846   1025432 47456 SyS_epoll_ 719aa53218 S android.process.media
+    system    1611  846   1022164 38996 SyS_epoll_ 719aa53218 S com.android.keychain
+    u0_a12    1626  846   1045732 64084 SyS_epoll_ 719aa53218 S com.android.launcher3
+    u0_a48    1658  846   1023000 40408 SyS_epoll_ 719aa53218 S com.android.printspooler
+    u0_a1     1693  846   1032000 49700 SyS_epoll_ 719aa53218 S android.process.acore
+    root      1721  2     0      0     worker_thr 0000000000 S kworker/u2:2
+    u0_a19    1741  846   1092672 98864 SyS_epoll_ 719aa53218 S com.android.systemui
+    u0_a50    1775  846   1023440 40864 SyS_epoll_ 719aa53218 S com.android.quicksearchbox
+    root      1813  1319  9096   1616           0 727de73d10 R ps
 
 ## Problem 2
 Set the program to record IPC for a number of applications and use the applications while you're recording IPC. Is there some set of common processes that all applications seem to communicate with? Why could that be?
@@ -79,3 +100,4 @@ Calculate the average size of a Binder message. What does the size of the Binder
 *Answer:*
 
 Around 100 bytes; The Binder messages are not very big, meaning there are not significant data exchanges between processes that passes through Binder, most probably signals; Files are better choices for IPC in extremely large scale, as it uses hard disk to store large amount data.
+
